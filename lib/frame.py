@@ -19,7 +19,6 @@ class Application(Frame):
         self.createWidgets()
 
     def createWidgets(self):
-        # frame_l = Frame(self.master)
         Label(self, text='产品报价明细:', font=(
             'Arial', 12)).grid(row=0, sticky='nw', padx=20, pady=20)
         Label(self, text='店铺销售明细:', font=(
@@ -55,10 +54,13 @@ class Application(Frame):
         self.entryResult.grid(row=5, column=1, pady=50)
 
     def calculateResult(self):
-        pass
+        print self.e1.get(),self.e2,self.e3,self.e4
+        self.eResult.set('/here/we/are')
+
 
     # self.entry1['width'] = 15
     # self.entry1['show'] = '*'
+    # entry['state'] = 'normal'
     # entry['state'] = 'readonly'
     def setEntryAttribute(self, *args, **kwargs):
         for entry in args:
@@ -69,7 +71,6 @@ class Application(Frame):
     def getFile(self, entry):
         def getfile():
             filename = tkFileDialog.askopenfilename()
-            # entry['state'] = 'normal'
             entry.insert(0, filename)
         return getfile
 
@@ -97,15 +98,15 @@ class Application(Frame):
         self.alertButton = Button(self, text='Hello', command=self.hello)
         self.alertButton.pack()
 
-        frm_L = Frame(self.master)
-        Label(frm_L, text='厚德', font=('Arial', 15)).pack(side=TOP)
-        Label(frm_L, text='博学', font=('Arial', 15)).pack(side=TOP)
-        frm_L.pack(side=LEFT)
+        frmL = Frame(self.master)
+        Label(frmL, text='厚德', font=('Arial', 15)).pack(side=TOP)
+        Label(frmL, text='博学', font=('Arial', 15)).pack(side=TOP)
+        frmL.pack(side=LEFT)
 
-        frm_R = Frame(self.master)
-        Label(frm_R, text='敬业', font=('Arial', 15)).pack(side=TOP)
-        Label(frm_R, text='乐群', font=('Arial', 15)).pack(side=TOP)
-        frm_R.pack(side=RIGHT)
+        frmR = Frame(self.master)
+        Label(frmR, text='敬业', font=('Arial', 15)).pack(side=TOP)
+        Label(frmR, text='乐群', font=('Arial', 15)).pack(side=TOP)
+        frmR.pack(side=RIGHT)
 
     def hello(self):
         name = self.nameInput.get() or 'world'
