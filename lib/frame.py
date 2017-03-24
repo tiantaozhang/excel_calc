@@ -4,12 +4,14 @@ from Tkinter import *
 import tkMessageBox
 import Tkinter
 import tkFileDialog
-
+from lib.excel import Excel
+import os
 
 class Application(Frame):
 
     def __init__(self, master=None):
         Frame.__init__(self, master)
+        self.__excel = Excel("")
         self.grid()
         self.e1 = StringVar()
         self.e2 = StringVar()
@@ -54,9 +56,98 @@ class Application(Frame):
         self.entryResult.grid(row=5, column=1, pady=50)
 
     def calculateResult(self):
-        print self.e1.get(),self.e2,self.e3,self.e4
-        self.eResult.set('/here/we/are')
+        print self.e1.get(),self.e2.get(),self.e3.get(),self.e4.get()
+        proDetail = self.getSheet(self.e1.get(), 'sheet1')
+        sailDetail = self.getSheet(self.e2.get(), 'sheet1')
+        expressNumberDetail = self.getSheet(self.e3.get(), 'sheet1')
+        expressCostDetail = self.getSheet(self.e4.get(), 'sheet1')
+        proDict = {}
+        sailDict = {}
+        expressNumDict = {}
+        expreCostDict = {}
+        #todo not sailDetail
+        if sailDetail:
+            # 货号
+            goodsIndex, numberIndex = -1, -1
+            for index in range(len(sailDetail[0])):
+                if u'货号' == sailDetail[0][index].strip():
+                    # 货号 => 数量
+                    goodsIndex = index
+                elif u'数量' == sailDetail[0][index].strip():
+                    numberIndex = index
+            if goodsIndex == -1 or numberIndex == -1:
+                # todo
+                pass
 
+            for row in sailDetail[1:]:
+                sailDict[row[goodsIndex]] = int(row[numberIndex])
+
+            print len(sailDict), sailDict
+
+        # todo not proDetail
+        if proDetail:
+            index, goodsIndex, inPriceIndex,distributePriceIndex  = 0, -1, -1, -1
+            for index in range(len(proDetail[0])):
+                if u'货号' == proDetail[0][index].strip():
+                    goodsIndex = index
+                elif u'进货价格' == proDetail[0][index].strip():
+                    inPriceIndex = index
+                elif u'分销价格' == proDetail[0][index].strip():
+                    distributePriceIndex = index
+            if goodsIndex == -1 or inPriceIndex == -1 or distributePriceIndex == -1:
+                # todo
+                pass
+
+            for row in proDetail[1:]:
+                proDict[row[goodsIndex]] = {'inPrice': float(row[inPriceIndex]), 'distributePrice': float(row[distributePriceIndex])}
+            print len(proDict), proDict
+
+        # todo not expressNumberDetail
+        if expressNumberDetail:
+            index, expressNumIndex, shopIndex = -1, -1, -1
+            for index in range(len(expressNumberDetail[0])):
+                if u'快递单号' == expressNumberDetail[0][index].strip():
+                    expressNumIndex = index
+                elif u'店铺名称' == expressNumberDetail[0][index].strip():
+                    costIndex = index
+            if expressNumIndex == -1 or shopIndex == -1:
+                # todo
+                pass
+            for row in expressNumberDetail[1:]:
+                expressNumDict[row[expressNumIndex]] = row[shopIndex]
+
+            print 'number:',len(expressNumDict), expressNumDict
+
+
+        # todo not expressCostDetail
+        if expressCostDetail:
+            index, expressNumIndex, costIndex = -1, -1, -1
+            for index in range(len(expressCostDetail[0])):
+                if u'快递单号' == expressCostDetail[0][index].strip():
+                    expressNumIndex = index
+                elif u'费用' == expressCostDetail[0][index].strip():
+                    costIndex = index
+            if expressNumIndex == -1 or costIndex == -1:
+                # todo
+                pass
+
+            for row in expressCostDetail[1:]:
+                expreCostDict[row[expressNumIndex]] = float(row[costIndex])
+
+            print 'cost:',len(expreCostDict), expreCostDict
+
+        dir = os.path.dirname(self.e1.get())
+        dir += '/result.exl'
+
+        self.eResult.set(dir)
+
+    def getSheet(self, path, sheet):
+        self.__excel.changePath(path)
+        sheetDict = self.__excel.read()
+        if sheet in sheetDict:
+            return sheetDict[sheet]
+        else:
+            return None
 
     # self.entry1['width'] = 15
     # self.entry1['show'] = '*'
