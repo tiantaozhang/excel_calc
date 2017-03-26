@@ -6,6 +6,8 @@ import Tkinter
 import tkFileDialog
 from lib.excel import Excel
 import os
+import logging
+# from log.log import Log
 
 class Application(Frame):
 
@@ -19,6 +21,7 @@ class Application(Frame):
         self.e4 = StringVar()
         self.eResult = StringVar()
         self.createWidgets()
+        logging.basicConfig(filename='excel.txt', level=logging.INFO, filemode='w')
 
     def createWidgets(self):
         Label(self, text='产品报价明细:', font=(
@@ -56,10 +59,10 @@ class Application(Frame):
         self.entryResult.grid(row=5, column=1, pady=50)
 
     def calculateResult(self):
-        self.e1.set('/Users/tatumn/home/workspace/python/github.com/tiantaozhang/excel_calc/test/lastdata/产品报价明细.xlsx')
-        self.e2.set('/Users/tatumn/home/workspace/python/github.com/tiantaozhang/excel_calc/test/lastdata/店铺销售明细.xls')
-        self.e3.set('/Users/tatumn/home/workspace/python/github.com/tiantaozhang/excel_calc/test/lastdata/快递单号明细.xlsx')
-        self.e4.set('/Users/tatumn/home/workspace/python/github.com/tiantaozhang/excel_calc/test/lastdata/快递费用明细.xlsx')
+        self.e1.set('/Users/tatumn/home/workspace/python/github.com/tiantaozhang/excel_calc/test/testlog/产品报价明细.xlsx')
+        self.e2.set('/Users/tatumn/home/workspace/python/github.com/tiantaozhang/excel_calc/test/testlog/店铺销售明细.xls')
+        self.e3.set('/Users/tatumn/home/workspace/python/github.com/tiantaozhang/excel_calc/test/testlog/快递单号明细.xlsx')
+        self.e4.set('/Users/tatumn/home/workspace/python/github.com/tiantaozhang/excel_calc/test/testlog/快递费用明细.xlsx')
         proDetail = self.getSheet(self.e1.get(), 'sheet1')
         sailDetail = self.getSheet(self.e2.get(), 'sheet1')
         expressNumberDetail = self.getSheet(self.e3.get(), 'sheet1')
@@ -82,14 +85,16 @@ class Application(Frame):
                     shopIndex = index
             if goodsIndex == -1 or numberIndex == -1 or shopIndex == -1:
                 # todo
-                print 'sailDetail err'
-                pass
+                logging.info("销售明细找不到货号、数量或店铺名称，请检查")
+                # tkMessageBox._show("销售明细找不到货号、数量或店铺名称，请检查")
+                return
+
             for row in sailDetail[1:]:
                 if row[shopIndex] in sailDict:
                     sailDict[row[shopIndex]].update({row[goodsIndex]: int(row[numberIndex])})
                 else:
                     sailDict[row[shopIndex]] = {row[goodsIndex]: int(row[numberIndex])}
-                # print row[goodsIndex], row[shopIndex], sailDict[row[shopIndex]], sailDict
+
         # todo not proDetail
         if proDetail:
             index, goodsIndex, inPriceIndex, distributePriceIndex, brandIndex  = 0, -1, -1, -1, -1
@@ -105,8 +110,8 @@ class Application(Frame):
 
             if goodsIndex == -1 or inPriceIndex == -1 or distributePriceIndex == -1 or brandIndex == -1:
                 # todo
-                print 'proDetail err'
-                pass
+                logging.info("产品明细找不到货号、进货价格、分销价格或品牌，请检查")
+                return
 
             for row in proDetail[1:]:
                 proDict[row[goodsIndex]] = {'inPrice': float(row[inPriceIndex]), 'distributePrice': float(row[distributePriceIndex]), 'brand': row[brandIndex]}
@@ -121,8 +126,8 @@ class Application(Frame):
                     shopIndex = index
             if expressNumIndex == -1 or shopIndex == -1:
                 # todo
-                print 'expressNumberDetail err'
-                pass
+                logging.info("快递单号明细找不到快递单号或店铺名称，请检查")
+
             for row in expressNumberDetail[1:]:
                 expressNumDict[int(row[expressNumIndex])] = row[shopIndex]
 
@@ -136,8 +141,7 @@ class Application(Frame):
                     costIndex = index
             if expressNumIndex == -1 or costIndex == -1:
                 # todo
-                print 'expressCostDetail err'
-                pass
+                logging.info("快递费用明细找不到快递单号，费用，请检查")
 
             for row in expressCostDetail[1:]:
                 expreCostDict[int(row[expressNumIndex])] = float(row[costIndex])
@@ -150,8 +154,6 @@ class Application(Frame):
         self.eResult.set(dir)
 
     def dealData(self, sailDict, proDict, expressNumDict, expressCostDetail):
-        # print sailDict
-        # print proDict
         result = {}
         for shop, sail in sailDict.items():
             print '1111', shop, sail
@@ -169,7 +171,7 @@ class Application(Frame):
                     else:
                         result[shop] = {proDict[proNum]['brand']: {'sumInPrice': inPrice, 'sumDisPrice': disPrice}}
                 else:
-                    print proNum + 'not found in proDict'
+                    logging.warn(u'货号：%d   not found' % proNum)
 
         expressShop = {}
         totalCost = 0
@@ -181,10 +183,8 @@ class Application(Frame):
                     expressShop[expressNumDict[expressNum]] = cost
                 totalCost += cost
             else:
-                print '%s is not in expressNumDict' % (expressNum)
+                logging.warn('快递号：%d   not found' % expressNum)
 
-        print totalCost
-        print result
         excelData = [[u'店铺名称', u'品牌', u'快递费用', u'分销成本', u'进货成本']]
         for shop in result.keys():
             for brand, value in result[shop].items():

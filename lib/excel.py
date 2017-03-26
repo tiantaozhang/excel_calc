@@ -6,7 +6,6 @@ import xlrd
 import xlwt
 from  tempfile import TemporaryFile
 
-
 class Excel:
     def __init__(self, path):
         self.path = path

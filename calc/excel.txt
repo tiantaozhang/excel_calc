@@ -1,0 +1,6 @@
+WARNING:root:货号：4567   not found
+WARNING:root:货号：8910   not found
+WARNING:root:货号：1234   not found
+WARNING:root:快递号：101   not found
+WARNING:root:快递号：102   not found
+WARNING:root:快递号：103   not found
