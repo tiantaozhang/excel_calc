@@ -56,11 +56,10 @@ class Application(Frame):
         self.entryResult.grid(row=5, column=1, pady=50)
 
     def calculateResult(self):
-        self.e1.set('/home/zhang/youmi/zhang/code/pyproject/github.com/excel_calc/test/data/产品报价明细.xlsx')
-        self.e2.set('/home/zhang/youmi/zhang/code/pyproject/github.com/excel_calc/test/data/店铺销售明细.xls')
-        self.e3.set('/home/zhang/youmi/zhang/code/pyproject/github.com/excel_calc/test/data/快递单号明细.xlsx')
-        self.e4.set('/home/zhang/youmi/zhang/code/pyproject/github.com/excel_calc/test/data/快递费用明细.xlsx')
-        print self.e1.get(),self.e2.get(),self.e3.get(),self.e4.get()
+        self.e1.set('/Users/tatumn/home/workspace/python/github.com/tiantaozhang/excel_calc/test/lastdata/产品报价明细.xlsx')
+        self.e2.set('/Users/tatumn/home/workspace/python/github.com/tiantaozhang/excel_calc/test/lastdata/店铺销售明细.xls')
+        self.e3.set('/Users/tatumn/home/workspace/python/github.com/tiantaozhang/excel_calc/test/lastdata/快递单号明细.xlsx')
+        self.e4.set('/Users/tatumn/home/workspace/python/github.com/tiantaozhang/excel_calc/test/lastdata/快递费用明细.xlsx')
         proDetail = self.getSheet(self.e1.get(), 'sheet1')
         sailDetail = self.getSheet(self.e2.get(), 'sheet1')
         expressNumberDetail = self.getSheet(self.e3.get(), 'sheet1')
@@ -83,11 +82,14 @@ class Application(Frame):
                     shopIndex = index
             if goodsIndex == -1 or numberIndex == -1 or shopIndex == -1:
                 # todo
+                print 'sailDetail err'
                 pass
-
             for row in sailDetail[1:]:
-                sailDict[row[goodsIndex]] = {'amount': int(row[numberIndex]), 'shop': row[shopIndex]}
-
+                if row[shopIndex] in sailDict:
+                    sailDict[row[shopIndex]].update({row[goodsIndex]: int(row[numberIndex])})
+                else:
+                    sailDict[row[shopIndex]] = {row[goodsIndex]: int(row[numberIndex])}
+                # print row[goodsIndex], row[shopIndex], sailDict[row[shopIndex]], sailDict
         # todo not proDetail
         if proDetail:
             index, goodsIndex, inPriceIndex, distributePriceIndex, brandIndex  = 0, -1, -1, -1, -1
@@ -101,8 +103,9 @@ class Application(Frame):
                 elif u'品牌' == proDetail[0][index].strip():
                     brandIndex = index
 
-            if goodsIndex == -1 or inPriceIndex == -1 or distributePriceIndex == -1:
+            if goodsIndex == -1 or inPriceIndex == -1 or distributePriceIndex == -1 or brandIndex == -1:
                 # todo
+                print 'proDetail err'
                 pass
 
             for row in proDetail[1:]:
@@ -118,9 +121,10 @@ class Application(Frame):
                     shopIndex = index
             if expressNumIndex == -1 or shopIndex == -1:
                 # todo
+                print 'expressNumberDetail err'
                 pass
             for row in expressNumberDetail[1:]:
-                expressNumDict[row[expressNumIndex]] = row[shopIndex]
+                expressNumDict[int(row[expressNumIndex])] = row[shopIndex]
 
         # todo not expressCostDetail
         if expressCostDetail:
@@ -132,10 +136,11 @@ class Application(Frame):
                     costIndex = index
             if expressNumIndex == -1 or costIndex == -1:
                 # todo
+                print 'expressCostDetail err'
                 pass
 
             for row in expressCostDetail[1:]:
-                expreCostDict[row[expressNumIndex]] = float(row[costIndex])
+                expreCostDict[int(row[expressNumIndex])] = float(row[costIndex])
 
         dir = os.path.dirname(self.e1.get())
         dir += '/result.xls'
@@ -145,34 +150,46 @@ class Application(Frame):
         self.eResult.set(dir)
 
     def dealData(self, sailDict, proDict, expressNumDict, expressCostDetail):
+        # print sailDict
+        # print proDict
         result = {}
-        for proNum, sail in sailDict.items():
-            if proNum in proDict:
-                inPrice = sail['amount'] * proDict[proNum]['inPrice']
-                disPrice = sail['amount'] * proDict[proNum]['distributePrice']
+        for shop, sail in sailDict.items():
+            print '1111', shop, sail
+            for proNum, amount in sail.items():
+                if proNum in proDict:
+                    inPrice = amount * proDict[proNum]['inPrice']
+                    disPrice = amount * proDict[proNum]['distributePrice']
 
-                if sail['shop'] in result:
-                    if proDict[proNum]['brand'] in result[sail['shop']]:
-                        result[sail['shop']][proDict[proNum]['brand']]['sumInPrice'] += inPrice
-                        result[sail['shop']][proDict[proNum]['brand']]['sumDisPrice'] += disPrice
+                    if shop in result:
+                        if proDict[proNum]['brand'] in result[shop]:
+                            result[shop][proDict[proNum]['brand']]['sumInPrice'] += inPrice
+                            result[shop][proDict[proNum]['brand']]['sumDisPrice'] += disPrice
+                        else:
+                            result[shop][proDict[proNum]['brand']] = {'sumInPrice': inPrice, 'sumDisPrice': disPrice}
                     else:
-                        result[sail['shop']][proDict[proNum]['brand']] = {'sumInPrice': inPrice, 'sumDisPrice': disPrice}
+                        result[shop] = {proDict[proNum]['brand']: {'sumInPrice': inPrice, 'sumDisPrice': disPrice}}
                 else:
-                    result[sail['shop']] = {proDict[proNum]['brand']: {'sumInPrice': inPrice, 'sumDisPrice': disPrice}}
+                    print proNum + 'not found in proDict'
+
         expressShop = {}
+        totalCost = 0
         for expressNum, cost in expressCostDetail.items():
             if expressNum in expressNumDict:
                 if expressNumDict[expressNum] in expressShop:
                     expressShop[expressNumDict[expressNum]] += cost
                 else:
                     expressShop[expressNumDict[expressNum]] = cost
-        print expressShop
+                totalCost += cost
+            else:
+                print '%s is not in expressNumDict' % (expressNum)
 
+        print totalCost
+        print result
         excelData = [[u'店铺名称', u'品牌', u'快递费用', u'分销成本', u'进货成本']]
         for shop in result.keys():
             for brand, value in result[shop].items():
-                if brand == 'expressCost':
-                    continue
+                # if brand == 'expressCost':
+                #     continue
                 expressCost = 0
                 if shop in expressShop:
                     expressCost = expressShop[shop]
