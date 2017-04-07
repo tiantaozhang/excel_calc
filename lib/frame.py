@@ -59,10 +59,13 @@ class Application(Frame):
         self.entryResult.grid(row=5, column=1, pady=50)
 
     def calculateResult(self):
-        self.e1.set('/Users/tatumn/home/workspace/python/github.com/tiantaozhang/excel_calc/test/testlog/产品报价明细.xlsx')
-        self.e2.set('/Users/tatumn/home/workspace/python/github.com/tiantaozhang/excel_calc/test/testlog/店铺销售明细.xls')
-        self.e3.set('/Users/tatumn/home/workspace/python/github.com/tiantaozhang/excel_calc/test/testlog/快递单号明细.xlsx')
-        self.e4.set('/Users/tatumn/home/workspace/python/github.com/tiantaozhang/excel_calc/test/testlog/快递费用明细.xlsx')
+        # self.e1.set('/Users/tatumn/home/workspace/python/github.com/tiantaozhang/excel_calc/test/testlog/产品报价明细.xlsx')
+        # self.e2.set('/Users/tatumn/home/workspace/python/github.com/tiantaozhang/excel_calc/test/testlog/店铺销售明细.xls')
+        # self.e3.set('/Users/tatumn/home/workspace/python/github.com/tiantaozhang/excel_calc/test/testlog/快递单号明细.xlsx')
+        # self.e4.set('/Users/tatumn/home/workspace/python/github.com/tiantaozhang/excel_calc/test/testlog/快递费用明细.xlsx')
+        if not self.e1.get() or not self.e2.get() or not self.e3.get() or not self.e4.get():
+            tkMessageBox._show("error", "请输入xls的地址")
+            return
         proDetail = self.getSheet(self.e1.get(), 'sheet1')
         sailDetail = self.getSheet(self.e2.get(), 'sheet1')
         expressNumberDetail = self.getSheet(self.e3.get(), 'sheet1')
@@ -86,7 +89,6 @@ class Application(Frame):
             if goodsIndex == -1 or numberIndex == -1 or shopIndex == -1:
                 # todo
                 logging.info("销售明细找不到货号、数量或店铺名称，请检查")
-                # tkMessageBox._show("销售明细找不到货号、数量或店铺名称，请检查")
                 return
 
             for row in sailDetail[1:]:
@@ -156,7 +158,6 @@ class Application(Frame):
     def dealData(self, sailDict, proDict, expressNumDict, expressCostDetail):
         result = {}
         for shop, sail in sailDict.items():
-            print '1111', shop, sail
             for proNum, amount in sail.items():
                 if proNum in proDict:
                     inPrice = amount * proDict[proNum]['inPrice']
@@ -206,11 +207,16 @@ class Application(Frame):
         else:
             return None
 
-    # self.entry1['width'] = 15
-    # self.entry1['show'] = '*'
-    # entry['state'] = 'normal'
-    # entry['state'] = 'readonly'
     def setEntryAttribute(self, *args, **kwargs):
+        """
+        >>> self.entry1['width'] = 15
+        >>> self.entry1['show'] = '*'
+        >>> entry['state'] = 'normal'
+        >>> entry['state'] = 'readonly'
+        :param args:
+        :param kwargs:
+        :return:
+        """
         for entry in args:
             for key, value in kwargs.items():
                 entry[key] = value
