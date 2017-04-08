@@ -7,10 +7,11 @@ import tkFileDialog
 from lib.excel import Excel
 import os
 import logging
+
+
 # from log.log import Log
 
 class Application(Frame):
-
     def __init__(self, master=None):
         Frame.__init__(self, master)
         self.__excel = Excel("")
@@ -27,11 +28,11 @@ class Application(Frame):
         Label(self, text='产品报价明细:', font=(
             'Arial', 12)).grid(row=0, sticky='nw', padx=20, pady=20)
         Label(self, text='店铺销售明细:', font=(
-            'Arial', 12)).grid(row=1,  sticky='nw', padx=20, pady=20)
+            'Arial', 12)).grid(row=1, sticky='nw', padx=20, pady=20)
         Label(self, text='快递单号明细:', font=(
             'Arial', 12)).grid(row=2, column=0, sticky='nw', padx=20, pady=20)
         Label(self, text='快递费用明细:', font=(
-            'Arial', 12)).grid(row=3,column=0, sticky='nw', padx=20, pady=20)
+            'Arial', 12)).grid(row=3, column=0, sticky='nw', padx=20, pady=20)
         self.entry1 = Entry(self, textvariable=self.e1)
         self.entry2 = Entry(self, textvariable=self.e2)
         self.entry3 = Entry(self, textvariable=self.e3)
@@ -74,7 +75,7 @@ class Application(Frame):
         sailDict = {}
         expressNumDict = {}
         expreCostDict = {}
-        #todo not sailDetail
+        # todo not sailDetail
         if sailDetail:
             # 货号
             goodsIndex, numberIndex, shopIndex = -1, -1, -1
@@ -99,7 +100,7 @@ class Application(Frame):
 
         # todo not proDetail
         if proDetail:
-            index, goodsIndex, inPriceIndex, distributePriceIndex, brandIndex  = 0, -1, -1, -1, -1
+            index, goodsIndex, inPriceIndex, distributePriceIndex, brandIndex = 0, -1, -1, -1, -1
             for index in range(len(proDetail[0])):
                 if u'货号' == proDetail[0][index].strip():
                     goodsIndex = index
@@ -116,7 +117,9 @@ class Application(Frame):
                 return
 
             for row in proDetail[1:]:
-                proDict[row[goodsIndex]] = {'inPrice': float(row[inPriceIndex]), 'distributePrice': float(row[distributePriceIndex]), 'brand': row[brandIndex]}
+                proDict[row[goodsIndex]] = {'inPrice': float(row[inPriceIndex]),
+                                            'distributePrice': float(row[distributePriceIndex]),
+                                            'brand': row[brandIndex]}
 
         # todo not expressNumberDetail
         if expressNumberDetail:
@@ -149,14 +152,19 @@ class Application(Frame):
                 expreCostDict[int(row[expressNumIndex])] = float(row[costIndex])
 
         dir = os.path.dirname(self.e1.get())
-        dir += '/result.xls'
-        result = self.dealData(sailDict, proDict, expressNumDict, expreCostDict)
-        self.__excel.write(dir, [u'sheet1'], {u'sheet1': result})
+        results = self.dealData(sailDict, proDict, expressNumDict, expreCostDict)
+        # self.__excel.write(dir, [u'sheet1'], {u'sheet1': results['result']})
+        for key, value in results.items():
+            tmpdir = "%s/%s.xls" % (dir, key)
+            print key,tmpdir
+            self.__excel.write(tmpdir, [u'sheet1'], {u'sheet1': value})
 
         self.eResult.set(dir)
 
     def dealData(self, sailDict, proDict, expressNumDict, expressCostDetail):
         result = {}
+        notMarryExpress = [[u'快递号']]
+        notMarryShopNum = [[u'货号']]
         for shop, sail in sailDict.items():
             for proNum, amount in sail.items():
                 if proNum in proDict:
@@ -173,6 +181,7 @@ class Application(Frame):
                         result[shop] = {proDict[proNum]['brand']: {'sumInPrice': inPrice, 'sumDisPrice': disPrice}}
                 else:
                     logging.warn(u'货号：%d   not found' % proNum)
+                    notMarryShopNum.append([proNum])
 
         expressShop = {}
         totalCost = 0
@@ -185,19 +194,24 @@ class Application(Frame):
                 totalCost += cost
             else:
                 logging.warn('快递号：%d   not found' % expressNum)
+                notMarryExpress.append([expressNum])
 
+        onlyExpressCost = []
         excelData = [[u'店铺名称', u'品牌', u'快递费用', u'分销成本', u'进货成本']]
         for shop in result.keys():
             for brand, value in result[shop].items():
                 # if brand == 'expressCost':
                 #     continue
-                expressCost = 0
-                if shop in expressShop:
+                expressCost = ""
+                if shop not in onlyExpressCost and shop in expressShop:
                     expressCost = expressShop[shop]
+                    onlyExpressCost.append(shop)
                 tmp = [shop, brand, expressCost, value['sumDisPrice'], value['sumInPrice']]
                 excelData.append(tmp)
+        # results {"result": excelData, "notMarryExpress": ..., "notMarryShop": ...}
+        results = {"result": excelData, "notMarryExpress": notMarryExpress, "notMarryShopNum": notMarryShopNum}
 
-        return excelData
+        return results
 
     def getSheet(self, path, sheet):
         self.__excel.changePath(path)
@@ -221,11 +235,11 @@ class Application(Frame):
             for key, value in kwargs.items():
                 entry[key] = value
 
-
     def getFile(self, entry):
         def getfile():
             filename = tkFileDialog.askopenfilename()
             entry.insert(0, filename)
+
         return getfile
 
     def createWidgetsTest(self):
