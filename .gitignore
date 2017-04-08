@@ -74,3 +74,4 @@ ENV/
 test/*
 !test/test_excel.py
 !test/testlog/*
+test/testlog/result.xls
