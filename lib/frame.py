@@ -75,6 +75,8 @@ class Application(Frame):
         sailDict = {}
         expressNumDict = {}
         expreCostDict = {}
+        expressContent = {}
+        expressCostContent = {}
         # todo not sailDetail
         if sailDetail:
             # 货号
@@ -123,36 +125,46 @@ class Application(Frame):
 
         # todo not expressNumberDetail
         if expressNumberDetail:
-            index, expressNumIndex, shopIndex = 0, -1, -1
+            index, expressNumIndex, shopIndex, dateIndex, companyIndex = 0, -1, -1, -1, -1
             for index in range(len(expressNumberDetail[0])):
                 if u'快递单号' == expressNumberDetail[0][index].strip():
                     expressNumIndex = index
                 elif u'店铺名称' == expressNumberDetail[0][index].strip():
                     shopIndex = index
+                elif u'日期' == expressNumberDetail[0][index].strip():
+                    dateIndex = index
+                elif u'快递公司' == expressNumberDetail[0][index].strip():
+                    companyIndex = index
             if expressNumIndex == -1 or shopIndex == -1:
                 # todo
                 logging.info("快递单号明细找不到快递单号或店铺名称，请检查")
 
             for row in expressNumberDetail[1:]:
                 expressNumDict[int(row[expressNumIndex])] = row[shopIndex]
+                # 转换成dist
+                expressContent[int(row[expressNumIndex])] = {'date': row[dateIndex], 'company': row[companyIndex], 'shopname': row[shopIndex]}
 
         # todo not expressCostDetail
         if expressCostDetail:
-            index, expressNumIndex, costIndex = 0, -1, -1
+            index, expressNumIndex, costIndex, companyIndex = 0, -1, -1, -1
             for index in range(len(expressCostDetail[0])):
                 if u'快递单号' == expressCostDetail[0][index].strip():
                     expressNumIndex = index
                 elif u'费用' == expressCostDetail[0][index].strip():
                     costIndex = index
+                elif u'快递公司' == expressCostDetail[0][index].strip():
+                    companyIndex = index
             if expressNumIndex == -1 or costIndex == -1:
                 # todo
                 logging.info("快递费用明细找不到快递单号，费用，请检查")
 
             for row in expressCostDetail[1:]:
                 expreCostDict[int(row[expressNumIndex])] = float(row[costIndex])
+                expressCostContent[int(row[expressNumIndex])] = {'company': row[companyIndex],
+                                                             'shopname': row[shopIndex]}
 
         dir = os.path.dirname(self.e1.get())
-        results = self.dealData(sailDict, proDict, expressNumDict, expreCostDict)
+        results = self.dealData(sailDict, proDict, expressNumDict, expreCostDict, expressContent, expressCostContent)
         # self.__excel.write(dir, [u'sheet1'], {u'sheet1': results['result']})
         for key, value in results.items():
             tmpdir = "%s/%s.xls" % (dir, key)
@@ -161,9 +173,9 @@ class Application(Frame):
 
         self.eResult.set(dir)
 
-    def dealData(self, sailDict, proDict, expressNumDict, expressCostDetail):
+    def dealData(self, sailDict, proDict, expressNumDict, expressCostDetail, expressContent, expressCostContent):
         result = {}
-        notMarryExpress = [[u'快递号']]
+        notMarryExpress = [[u'快递号', u'公司', u'费用']]
         notMarryShopNum = [[u'货号']]
         for shop, sail in sailDict.items():
             for proNum, amount in sail.items():
@@ -194,7 +206,7 @@ class Application(Frame):
                 totalCost += cost
             else:
                 logging.warn('快递号：%d   not found' % expressNum)
-                notMarryExpress.append([expressNum])
+                notMarryExpress.append([expressNum, expressCostContent[expressNum]['company'], cost])
 
         onlyExpressCost = []
         excelData = [[u'店铺名称', u'品牌', u'快递费用', u'分销成本', u'进货成本']]
