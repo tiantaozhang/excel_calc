@@ -192,7 +192,7 @@ class Application(Frame):
                     else:
                         result[shop] = {proDict[proNum]['brand']: {'sumInPrice': inPrice, 'sumDisPrice': disPrice}}
                 else:
-                    logging.warn(u'货号：%d   not found' % proNum)
+                    logging.warn(u'货号：%s   not found' % proNum)
                     notMarryShopNum.append([proNum])
 
         expressShop = {}
